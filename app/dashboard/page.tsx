@@ -141,20 +141,23 @@ export default function DashboardPage() {
           </Card>
 
           {/* Manage Kids Card */}
-          <Card className="border-2 border-blue-200 hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-cyan-50">
-            <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Kids Profile Manage করুন</h3>
-              <p className="text-gray-600 mb-4">
-                বাচ্চাদের profile add করুন বা edit করুন
-              </p>
-              <Button size="lg" variant="outline" className="w-full">
-                Manage Kids
-              </Button>
-            </CardContent>
-          </Card>
+          <Card 
+  className="border-2 border-blue-200 hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-cyan-50"
+  onClick={() => router.push('/dashboard/kids')}  // ← Add this
+>
+  <CardContent className="p-8 text-center">
+    <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <User className="w-8 h-8 text-white" />
+    </div>
+    <h3 className="text-xl font-bold mb-2">Kids Profile Manage করুন</h3>
+    <p className="text-gray-600 mb-4">
+      বাচ্চাদের profile add করুন বা edit করুন
+    </p>
+    <Button size="lg" variant="outline" className="w-full">
+      Manage Kids
+    </Button>
+  </CardContent>
+</Card>
         </div>
 
         {/* Recent Stories Section */}
