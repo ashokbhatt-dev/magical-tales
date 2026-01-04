@@ -5,8 +5,15 @@ import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { Sparkles, BookOpen, Wand2 } from "lucide-react"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 
 export function Hero() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
       {/* Animated background elements */}
@@ -16,29 +23,33 @@ export function Hero() {
         <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* Floating stars */}
-      {[...Array(20)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute text-yellow-300 text-2xl"
-          initial={{
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            opacity: 0,
-          }}
-          animate={{
-            y: [null, Math.random() * -100],
-            opacity: [0, 1, 0],
-          }}
-          transition={{
-            duration: 3 + Math.random() * 2,
-            repeat: Infinity,
-            delay: Math.random() * 5,
-          }}
-        >
-          ✨
-        </motion.div>
-      ))}
+      {/* Floating stars - Only render on client */}
+      {mounted && (
+        <>
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute text-yellow-300 text-2xl"
+              initial={{
+                x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
+                y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000),
+                opacity: 0,
+              }}
+              animate={{
+                y: [null, Math.random() * -100],
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: 3 + Math.random() * 2,
+                repeat: Infinity,
+                delay: Math.random() * 5,
+              }}
+            >
+              ✨
+            </motion.div>
+          ))}
+        </>
+      )}
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
@@ -59,12 +70,12 @@ export function Hero() {
 
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            <span className="bengali block">জাদুকরী গল্পের জগত</span>
+            <span className="block">জাদুকরী গল্পের জগত</span>
             <span className="text-gradient block mt-2">Magical Tales</span>
           </h1>
 
           {/* Subheading */}
-          <p className="bengali text-xl md:text-2xl text-white/80 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-3xl mx-auto">
             আপনার বাচ্চার জন্য AI দিয়ে তৈরি ব্যক্তিগত গল্প। 
             প্রতিটি গল্প অনন্য, শিক্ষামূলক এবং মজাদার!
           </p>
@@ -72,7 +83,7 @@ export function Hero() {
           {/* Features list */}
           <div className="flex flex-wrap justify-center gap-4 mb-10">
             {[
-              "🎨 11টি Animated থিম",
+              "🎨 ১১টি Animated থিম",
               "🤖 AI-Powered",
               "📱 সব Device এ",
               "🎯 Personalized",
@@ -94,14 +105,14 @@ export function Hero() {
             <Link href="/signup">
               <Button size="lg" className="group">
                 <Wand2 className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
-                <span className="bengali">শুরু করুন - ৳৪৯৯/মাস</span>
+                <span>শুরু করুন - ৳৪৯৯/মাস</span>
               </Button>
             </Link>
             
             <Link href="#demo">
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-purple-900">
                 <BookOpen className="w-5 h-5 mr-2" />
-                <span className="bengali">ডেমো দেখুন</span>
+                <span>ডেমো দেখুন</span>
               </Button>
             </Link>
           </div>

@@ -1,0 +1,177 @@
+// app/(auth)/login/page.tsx
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Sparkles, Mail, Lock, AlertCircle, Loader2 } from "lucide-react"
+import toast, { Toaster } from "react-hot-toast"
+
+export default function LoginPage() {
+  const router = useRouter()
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    // Validation
+    if (!formData.email || !formData.password) {
+      setError("Email এবং Password দিন")
+      setLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed")
+      }
+
+      // Store user in localStorage (temporary, we'll improve this)
+      localStorage.setItem("user", JSON.stringify(data.user))
+      
+      toast.success("Login সফল! 🎉")
+      
+      // Redirect to dashboard
+      setTimeout(() => {
+        router.push("/dashboard")
+      }, 1000)
+
+    } catch (err: any) {
+      setError(err.message || "কিছু ভুল হয়েছে")
+      toast.error(err.message || "কিছু ভুল হয়েছে")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
+      <Toaster position="top-center" />
+      
+      {/* Animated background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
+      <Card className="w-full max-w-md relative z-10 border-2 shadow-2xl">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <CardTitle className="text-3xl font-bold">
+            Welcome Back!
+          </CardTitle>
+          <CardDescription className="text-base">
+            আপনার account এ login করুন
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                <span className="text-sm">{error}</span>
+              </div>
+            )}
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="password"
+                  placeholder="আপনার password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            {/* Forgot Password */}
+            <div className="text-right">
+              <Link href="/forgot-password" className="text-sm text-purple-600 hover:text-purple-700">
+                Password ভুলে গেছেন?
+              </Link>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Logging in...
+                </>
+              ) : (
+                "Login করুন"
+              )}
+            </Button>
+          </form>
+
+          {/* Signup Link */}
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              নতুন user?{" "}
+              <Link href="/signup" className="text-purple-600 hover:text-purple-700 font-semibold">
+                Account তৈরি করুন
+              </Link>
+            </p>
+          </div>
+
+          {/* Back to Home */}
+          <div className="mt-4 text-center">
+            <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
+              ← Home এ ফিরে যান
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
