@@ -1,16 +1,15 @@
 // app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/db/supabase'
+import { getSupabaseAdmin } from '@/lib/db/supabase'
 import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const supabase = getSupabaseAdmin()
+    const { email, password } = await request.json()
 
-    console.log('Login request received:', { email }) // Debug log
+    console.log('Login request received:', { email })
 
-    // Validation
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
@@ -18,41 +17,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user from database
-    const { data: user, error } = await supabaseAdmin
+    // Find user by email
+    const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('email', email.toLowerCase())
       .single()
 
-    if (error || !user) {
+    if (userError || !user) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
       )
     }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password)
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password)
 
-    if (!isPasswordValid) {
+    if (!isValidPassword) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
       )
     }
 
-    // Return user (without password)
+    // Return user without password
     const { password: _, ...userWithoutPassword } = user
 
-    return NextResponse.json(
-      { 
-        message: 'Login successful',
-        user: userWithoutPassword 
-      },
-      { status: 200 }
-    )
-
+    return NextResponse.json({
+      success: true,
+      user: userWithoutPassword
+    })
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(

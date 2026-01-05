@@ -46,7 +46,8 @@ export default function KidsPage() {
       const response = await fetch(`/api/kids?userId=${userId}`)
       if (response.ok) {
         const data = await response.json()
-        setKids(data.kids || [])
+        // ✅ Fixed: data is already an array
+        setKids(data || [])
       }
     } catch (error) {
       console.error("Failed to load kids:", error)
@@ -79,7 +80,8 @@ export default function KidsPage() {
         setFormData({ name: "", gender: "boy", age: 5, interests: [] })
         loadKids(user.id)
       } else {
-        toast.error("কিছু ভুল হয়েছে")
+        const errorData = await response.json()
+        toast.error(errorData.error || "কিছু ভুল হয়েছে")
       }
     } catch (error) {
       toast.error("কিছু ভুল হয়েছে")
