@@ -1,16 +1,8 @@
 // app/api/stories/generate/route.ts
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth" // adjust path as needed
+import { getSupabaseAdmin } from "@/lib/db/supabase" // ✅ Fixed Import
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-// OpenRouter API call function
+// OpenRouter API call function (আপনার কোডই রাখা হয়েছে)
 async function generateWithOpenRouter(prompt: string): Promise<string> {
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -41,7 +33,6 @@ async function generateWithOpenRouter(prompt: string): Promise<string> {
 
   const data = await response.json()
 
-  // Check for errors
   if (!response.ok) {
     console.error("OpenRouter API Error:", data)
     throw new Error(data.error?.message || `API Error: ${response.status}`)
@@ -57,18 +48,12 @@ async function generateWithOpenRouter(prompt: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Check authentication (optional but recommended)
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized - Please login" },
-        { status: 401 }
-      )
-    }
-
-    // 2. Parse request body
+    // 1. Parse request body
     const body = await request.json()
+    
+    // ✅ Change: userId এখন বডি থেকে নেওয়া হচ্ছে (session এর বদলে)
     const { 
+      userId, 
       childName, 
       age, 
       theme, 
@@ -76,6 +61,14 @@ export async function POST(request: NextRequest) {
       genre = "adventure",
       includeImages = false 
     } = body
+
+    // 2. Validate Authentication
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized - User ID required" },
+        { status: 401 }
+      )
+    }
 
     // 3. Validate required fields
     if (!childName?.trim()) {
@@ -131,15 +124,18 @@ export async function POST(request: NextRequest) {
     
     const storyContent = await generateWithOpenRouter(prompt)
 
-    // 6. Extract title from content (if present)
+    // 6. Extract title
     const titleMatch = storyContent.match(/^#?\s*(.+?)[\n\r]/)
     const title = titleMatch?.[1]?.trim() || `${childName}-এর ${theme} গল্প`
 
     // 7. Save to Supabase
+    // ✅ Change: getSupabaseAdmin() ব্যবহার করা হয়েছে
+    const supabase = getSupabaseAdmin() 
+    
     const { data: story, error: dbError } = await supabase
       .from("stories")
       .insert({
-        user_id: session.user.id,
+        user_id: userId, // ✅ session.user.id এর বদলে userId
         child_name: childName.trim(),
         age: parseInt(age),
         theme: theme.trim(),
@@ -161,7 +157,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 8. Return success response
+    // 8. Return success
     return NextResponse.json({
       success: true,
       story: {
@@ -179,18 +175,10 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Story Generation Error:", error)
     
-    // Handle specific error types
-    if (error.message.includes("rate limit")) {
+    if (error.message?.includes("rate limit")) {
       return NextResponse.json(
         { error: "Too many requests. Please wait a moment and try again." },
         { status: 429 }
-      )
-    }
-
-    if (error.message.includes("API Error")) {
-      return NextResponse.json(
-        { error: "AI provider error. Please try again." },
-        { status: 502 }
       )
     }
 
@@ -201,13 +189,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Optional: GET method to check API status
 export async function GET() {
   return NextResponse.json({
     status: "ok",
     endpoint: "/api/stories/generate",
-    method: "POST",
-    required: ["childName", "age", "theme"],
-    optional: ["language", "genre", "includeImages"]
+    method: "POST"
   })
 }
