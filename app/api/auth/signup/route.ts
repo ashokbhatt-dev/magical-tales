@@ -1,41 +1,26 @@
 // app/api/auth/signup/route.ts
+
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/db/supabase'
+import { getSupabaseAdmin } from '@/lib/db/supabase'  // ✅ নাম change
 import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabaseAdmin()  // ✅ function call করুন
+  
   try {
-    const body = await request.json()
-    const { email, password, name } = body
+    const { name, email, password } = await request.json()
 
-    console.log('Signup request received:', { email, name }) // Debug log
-
-    // Validation
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      )
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
-        { status: 400 }
-      )
-    }
-
-    // Check if user already exists
-    const { data: existingUser } = await supabaseAdmin
+    // Check if user exists
+    const { data: existingUser } = await supabase
       .from('users')
       .select('id')
-      .eq('email', email.toLowerCase())
+      .eq('email', email)
       .single()
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 409 }
+        { error: 'User already exists' },
+        { status: 400 }
       )
     }
 
@@ -43,43 +28,33 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     // Create user
-    const { data: newUser, error } = await supabaseAdmin
+    const { data: user, error } = await supabase
       .from('users')
-      .insert([
-        {
-          email: email.toLowerCase(),
-          password: hashedPassword,
-          name: name || null,
-          plan: 'free',
-          subscription_status: 'inactive'
-        }
-      ])
+      .insert({
+        name,
+        email,
+        password: hashedPassword,
+        plan: 'free'
+      })
       .select()
       .single()
 
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { error: 'Failed to create user' },
-        { status: 500 }
-      )
-    }
+    if (error) throw error
 
-    // Return user (without password)
-    const { password: _, ...userWithoutPassword } = newUser as any
-
-    return NextResponse.json(
-      { 
-        message: 'User created successfully',
-        user: userWithoutPassword 
-      },
-      { status: 201 }
-    )
+    return NextResponse.json({
+      message: 'User created successfully',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        plan: user.plan
+      }
+    })
 
   } catch (error) {
     console.error('Signup error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to create user' },
       { status: 500 }
     )
   }
