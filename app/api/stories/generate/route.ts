@@ -470,16 +470,11 @@ function parseAIResponse(
 }
 
 // Clean story content
+// ✅ Fixed (s flag সরিয়ে [\s\S] ব্যবহার করা হয়েছে)
 function cleanStoryContent(content: string): string {
   return content
-    .replace(/,?\s*"moral_lesson"\s*:.*$/is, '')
-    .replace(/,?\s*"quiz"\s*:\s*\[.*$/is, '')
+    .replace(/,?\s*"moral_lesson"\s*:[\s\S]*$/i, '')
+    .replace(/,?\s*"quiz"\s*:\s*\[[\s\S]*$/i, '')
     .replace(/\s*}\s*$/g, '')
     .replace(/\\n\\n/g, '\n\n')
-    .replace(/\\n/g, '\n')
-    .replace(/\\"/g, '"')
-    .replace(/\\\\/g, '\\')
-    .replace(/^["']|["']$/g, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
 }
